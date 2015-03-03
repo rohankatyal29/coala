@@ -63,7 +63,10 @@ import coalib.your_component.component2
 # ...
 ```
 
-Note here that now system imports do not work, only coala imports.
+> **NOTE**
+>
+> You can use system imports here also, but the coala codestyle suggests to
+> place them above the three setup lines, like before.
 
 Then the actual test suite class follows, that contains the tests. Each test
 suite is made up of test cases, where the test suite checks the overall
@@ -74,6 +77,7 @@ The basic declaration for a test suite class is as follows:
 ```python
 class YourComponentTest(unittest.Test):
     # Your test cases.
+    pass
 ```
 
 You should derive your test suite from `unittest.Test` to have access to the
@@ -101,6 +105,19 @@ result to the overall test-suite-invoking-instance, that manages all tests in
 coala. The result is processed and you get a message if something went wrong in
 your test.
 
+Available assert functions are listed in the section **Assertions** below.
+
+At last the test file needs to end with the following sequence:
+
+```python
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
+```
+
+The code is only executed if your code is run as an executable. If that's the
+case (like the `run_tests.py` script does), the `main()` method from the
+`unittest` package is called and will execute your defined test.
+
 So an example test that succeeds would be:
 
 ```python
@@ -111,8 +128,11 @@ class YourComponentTest(unittest.Test):
         self.assertEqual(1, 1)
         # Hm yeah, True is True.
         self.assertTrue(True)
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
 ```
-Available assert functions are listed in the section **Assertions** below.
+
 
 > **NOTE**
 >
@@ -128,6 +148,7 @@ Available assert functions are listed in the section **Assertions** below.
 > # Reason why this function is untestable.
 > def untestable_func(): # pragma: no cover
 >     # Untestable code.
+>     pass
 > ```
 >
 > Code coverage is measured using python 3.4.
@@ -142,6 +163,7 @@ test suite and it is invoked automatically once at test suite startup:
 class YourComponentTest(unittest.Test):
     def setUp(self):
         # Your initialization of constants, operating system API calls etc.
+        pass
 ```
 
 The opposite from this is the `tearDown()` function. It gets invoked when the
@@ -151,7 +173,64 @@ test suite finished running all test cases. Declare it like `setUp()` before:
 class YourComponentTest(unittest.Test):
     def tearDown(self):
         # Deinitialization, release calls etc.
+        pass
 ```
+
+## Skipping tests
+
+Sometimes your test needs prerequisites the running platform lacks. That can be
+either installed executables, packages, python versions etc.
+
+Coala provides two methods to skip a test.
+
+- `skip_test()` function
+
+  Just define this function in your test suite class and test the needed
+  prerequisites:
+
+  ```python
+  class YourComponentTest(unittest.Test):
+      def skip_test(self):
+          # Add here your checks.
+          return False
+  ```
+
+  The function shall only return `False` (if everything is OK and test can run)
+  or a string with the reason why the test is skipped. But never return `True`!
+
+  An example for skipping a test (used for the eSpeak test for real):
+
+  ```python
+  def skip_test():
+      try:
+          subprocess.Popen(['espeak'])
+          return False
+      except OSError:
+          return "eSpeak is not installed."
+  ```
+
+- `unittest` built-in attributes
+
+  The `unittest` package from python defines attributes to handle skips for
+  specific test cases, not only the whole test suite.
+
+  Since there are many ways to skip tests like this, here only a short example:
+
+  ```python
+  @unittest.skip("A reason.")
+  def test_nothing(self):
+      self.fail("Shouldn't happen.")
+
+  @unittest.skipIf(mylib.__version__ < (1, 3),
+                   "Not supported in this library version.")
+  def test_format(self):
+      # Tests that work for only a certain version of the library.
+      pass
+  ```
+
+  For more information about the attribute usage, refer to the [documentation]
+  (https://docs.python.org/3.4/library/unittest.html) at paragraph
+  **26.3.6. Skipping tests and expected failures**.
 
 ## Assertions
 
@@ -176,19 +255,19 @@ inheriting from `unittest.Test`:
 
 - `assertIs(a, b)`
 
-  Checks whether expression `a` `is` `b`.
+  Checks whether expression `a` is `b`.
 
 - `assertIsNot(a, b)`
 
-  Checks whether expression `a` `is not` `b`.
+  Checks whether expression `a` is not `b`.
 
 - `assertIsNone(a)`
 
-  Checks whether expression `a` `is None`.
+  Checks whether expression `a` is None.
 
 - `assertIsNotNone(a)`
 
-  Checks whether expression `a` `is not None`.
+  Checks whether expression `a` is not None.
 
 - `assertIn(a, list)`
 
@@ -206,24 +285,24 @@ inheriting from `unittest.Test`:
 
   Checks whether expression `a` is not of type `type`.
 
-- `assertRaises(error, function, [params...])`
+- `assertRaises(error, function, *args, **kwargs)`
 
   Checks whether `function` throws the specific `error`. When calling this
-  assert it invokes the function with the specified `params`.
+  assert it invokes the function with the specified `*args` and `**kwargs`.
 
 If you want more information about the python `unittest`-module, refer to the
 [official documentation](https://docs.python.org/3/library/unittest.html) and
 for asserts the subsection [assert-methods]
 (https://docs.python.org/3/library/unittest.html#assert-methods).
 
-## Template
+## Kickstart
 
-This section contains a concluding template that you can use as a kickstart for
-test-writing.
+This section contains a concluding and simple example that you can use as a
+kickstart for test-writing.
 
-Put the template under the desired folder inside `coalib/tests` or
-`bears/tests`, modify it to let it test your stuff and run from the coala root
-folder `./run_tests.py`.
+Put the code under the desired folder inside `coalib/tests` or `bears/tests`,
+modify it to let it test your stuff and run from the coala root folder
+`./run_tests.py`.
 
 ```python
 # Import here your needed system components.
